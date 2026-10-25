@@ -1,0 +1,77 @@
+<%- include('partials/header') %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold text-navy mb-1">Notifications</h2>
+    <p class="text-muted small mb-0">Stay informed about your reports, received claims, and match suggestions.</p>
+  </div>
+  <% if (notifications && notifications.length > 0) { %>
+    <form action="/notifications/read-all" method="POST" class="m-0">
+      <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+      <button type="submit" class="btn btn-sm btn-outline-custom">
+        <i class="bi bi-check2-all me-1"></i> Mark All as Read
+      </button>
+    </form>
+  <% } %>
+</div>
+
+<% if (notifications && notifications.length > 0) { %>
+  <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+    <div class="list-group list-group-flush">
+      <% notifications.forEach(notif => { %>
+        <div class="list-group-item p-3 d-flex align-items-start justify-content-between <%= notif.isRead ? 'bg-white' : 'bg-light bg-opacity-75 border-start border-4 border-primary' %>">
+          <div class="d-flex align-items-start me-3">
+            <div class="rounded-circle p-2 me-3 flex-shrink-0 
+              <%= notif.type === 'claim_submitted' ? 'bg-primary bg-opacity-10 text-primary' : 
+                 (notif.type === 'claim_approved' || notif.type === 'item_resolved' ? 'bg-success bg-opacity-10 text-success' : 
+                 (notif.type === 'match_found' ? 'bg-warning bg-opacity-10 text-warning' : 'bg-secondary bg-opacity-10 text-secondary')) %>">
+              <i class="bi 
+                <%= notif.type === 'claim_submitted' ? 'bi-shield-plus' : 
+                   (notif.type === 'claim_approved' ? 'bi-patch-check-fill' : 
+                   (notif.type === 'claim_rejected' ? 'bi-x-circle-fill' : 
+                   (notif.type === 'item_resolved' ? 'bi-trophy' : 
+                   (notif.type === 'match_found' ? 'bi-lightning-charge-fill' : 'bi-bell')))) %> fs-5"></i>
+            </div>
+            <div>
+              <p class="mb-1 text-dark <%= notif.isRead ? '' : 'fw-semibold' %>">
+                <%= notif.message %>
+              </p>
+              <div class="d-flex align-items-center gap-3 small text-muted">
+                <span><i class="bi bi-clock me-1"></i><%= new Date(notif.createdAt).toLocaleString() %></span>
+                <% if (notif.relatedItem) { %>
+                  <a href="/items/<%= notif.relatedItem._id || notif.relatedItem %>" class="text-primary text-decoration-none">
+                    <i class="bi bi-box-arrow-up-right me-1"></i>View Item
+                  </a>
+                <% } %>
+                <% if (notif.relatedClaim) { %>
+                  <a href="/claims/<%= notif.relatedClaim._id || notif.relatedClaim %>" class="text-primary text-decoration-none">
+                    <i class="bi bi-shield-check me-1"></i>View Claim
+                  </a>
+                <% } %>
+              </div>
+            </div>
+          </div>
+
+          <% if (!notif.isRead) { %>
+            <form action="/notifications/<%= notif._id %>/read" method="POST" class="m-0 flex-shrink-0">
+              <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+              <button type="submit" class="btn btn-sm btn-light border" title="Mark as read">
+                <i class="bi bi-check-lg text-primary"></i>
+              </button>
+            </form>
+          <% } %>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+<% } else { %>
+  <div class="empty-state py-5">
+    <div class="empty-state-icon text-muted">
+      <i class="bi bi-bell-slash"></i>
+    </div>
+    <h4 class="fw-bold text-navy mb-2">No notifications</h4>
+    <p class="text-muted small mb-0">You're all caught up! New alerts regarding your reports and claims will appear here.</p>
+  </div>
+<% } %>
+
+<%- include('partials/footer') %>

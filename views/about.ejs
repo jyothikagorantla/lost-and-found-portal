@@ -1,0 +1,94 @@
+<%- include('partials/header') %>
+
+<div class="row justify-content-center py-4">
+  <div class="col-lg-9 col-md-11">
+    <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-4 bg-white">
+      <div class="text-center mb-5">
+        <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold mb-2">Our Mission</span>
+        <h2 class="fw-bold text-navy">About Lost &amp; Found Portal</h2>
+        <p class="text-muted mx-auto" style="max-width: 600px;">
+          An open, secure, and intuitive web application designed to reconnect misplaced personal belongings with their rightful owners in campuses, colleges, hostels, offices, and community centers.
+        </p>
+      </div>
+
+      <div class="row g-4 mb-5">
+        <div class="col-md-4">
+          <div class="p-3 bg-light rounded-3 text-center h-100">
+            <i class="bi bi-shield-check text-primary fs-1 mb-2 d-block"></i>
+            <h5 class="fw-bold text-navy">Verified Proof</h5>
+            <p class="text-muted small mb-0">
+              Private notes and serial numbers remain confidential until claimants prove authentic ownership.
+            </p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="p-3 bg-light rounded-3 text-center h-100">
+            <i class="bi bi-cpu text-teal fs-1 mb-2 d-block"></i>
+            <h5 class="fw-bold text-navy">Smart Matching</h5>
+            <p class="text-muted small mb-0">
+              Our automated matching engine pairs lost reports with found items based on category, date, and keyword similarity.
+            </p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="p-3 bg-light rounded-3 text-center h-100">
+            <i class="bi bi-bell-fill text-warning fs-1 mb-2 d-block"></i>
+            <h5 class="fw-bold text-navy">In-App Alerts</h5>
+            <p class="text-muted small mb-0">
+              Instant notification updates when claims are lodged, reviewed, or potential matches are discovered.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <h4 class="fw-bold text-navy mb-3">Frequently Asked Questions</h4>
+      <div class="accordion accordion-flush" id="faqAccordion">
+        <div class="accordion-item border-bottom">
+          <h2 class="accordion-header" id="faq1">
+            <button class="accordion-button collapsed fw-semibold text-navy" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1">
+              Who can report a lost or found item?
+            </button>
+          </h2>
+          <div id="collapse1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body text-secondary small">
+              Any registered user can report both lost belongings and found items. You do not need a separate account type to act as a finder.
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item border-bottom">
+          <h2 class="accordion-header" id="faq2">
+            <button class="accordion-button collapsed fw-semibold text-navy" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2">
+              Are private identifying details exposed to other users?
+            </button>
+          </h2>
+          <div id="collapse2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body text-secondary small">
+              No. When you submit a report, the "Private Identifying Notes" field is only visible to you and verified portal administrators. This enables finders to test claimants against undisclosed details (such as wallpaper or serial numbers).
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item border-bottom">
+          <h2 class="accordion-header" id="faq3">
+            <button class="accordion-button collapsed fw-semibold text-navy" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3">
+              How does the ownership claim system work?
+            </button>
+          </h2>
+          <div id="collapse3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body text-secondary small">
+              When an item is found, the owner can click "Submit Claim", describe proof of ownership, and optionally upload evidence (e.g. receipts, barcodes). The reporter or portal administrator evaluates the claim and approves or rejects it before any physical handover.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-center mt-5">
+        <a href="/items/report-lost" class="btn btn-danger me-2">Report Lost Item</a>
+        <a href="/items/report-found" class="btn btn-accent-custom">Report Found Item</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,205 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+  <div>
+    <h2 class="fw-bold text-navy mb-1">Browse &amp; Search Items</h2>
+    <p class="text-muted small mb-0">Search through all reported lost and found belongings across the community.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="/items/report-lost" class="btn btn-danger btn-sm">
+      <i class="bi bi-plus-circle me-1"></i> Report Lost
+    </a>
+    <a href="/items/report-found" class="btn btn-accent-custom btn-sm">
+      <i class="bi bi-plus-circle me-1"></i> Report Found
+    </a>
+  </div>
+</div>
+
+<!-- Search & Advanced Filter Card -->
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+  <div class="card-body p-4">
+    <form action="/items" method="GET">
+      <!-- Search Keywords Row -->
+      <div class="row g-3 mb-3">
+        <div class="col-lg-8 col-md-7">
+          <div class="input-group">
+            <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+            <input
+              type="text"
+              name="q"
+              class="form-control"
+              placeholder="Search by keywords (e.g. iPhone, Dell charger, black backpack)..."
+              value="<%= typeof query !== 'undefined' && query.q ? query.q : '' %>"
+            >
+          </div>
+        </div>
+
+        <div class="col-lg-4 col-md-5">
+          <div class="input-group">
+            <span class="input-group-text bg-light"><i class="bi bi-geo-alt"></i></span>
+            <input
+              type="text"
+              name="location"
+              class="form-control"
+              placeholder="Location (e.g. Library, Gym)..."
+              value="<%= typeof query !== 'undefined' && query.location ? query.location : '' %>"
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters Row -->
+      <div class="row g-3">
+        <!-- Type Filter -->
+        <div class="col-sm-6 col-md-3">
+          <label class="form-label small text-muted">Report Type</label>
+          <select name="type" class="form-select">
+            <option value="">All Types (Lost &amp; Found)</option>
+            <option value="lost" <%= typeof query !== 'undefined' && query.type === 'lost' ? 'selected' : '' %>>Lost Only</option>
+            <option value="found" <%= typeof query !== 'undefined' && query.type === 'found' ? 'selected' : '' %>>Found Only</option>
+          </select>
+        </div>
+
+        <!-- Category Filter -->
+        <div class="col-sm-6 col-md-3">
+          <label class="form-label small text-muted">Category</label>
+          <select name="category" class="form-select">
+            <option value="">All Categories</option>
+            <% categories.forEach(cat => { %>
+              <option value="<%= cat %>" <%= typeof query !== 'undefined' && query.category === cat ? 'selected' : '' %>><%= cat %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <!-- Status Filter -->
+        <div class="col-sm-6 col-md-2">
+          <label class="form-label small text-muted">Status</label>
+          <select name="status" class="form-select">
+            <option value="">All Statuses</option>
+            <option value="active" <%= typeof query !== 'undefined' && query.status === 'active' ? 'selected' : '' %>>Active</option>
+            <option value="claimed" <%= typeof query !== 'undefined' && query.status === 'claimed' ? 'selected' : '' %>>Claimed</option>
+            <option value="resolved" <%= typeof query !== 'undefined' && query.status === 'resolved' ? 'selected' : '' %>>Resolved</option>
+          </select>
+        </div>
+
+        <!-- Sort By -->
+        <div class="col-sm-6 col-md-2">
+          <label class="form-label small text-muted">Sort By</label>
+          <select name="sort" class="form-select">
+            <option value="newest" <%= typeof query !== 'undefined' && query.sort === 'newest' ? 'selected' : '' %>>Newest First</option>
+            <option value="oldest" <%= typeof query !== 'undefined' && query.sort === 'oldest' ? 'selected' : '' %>>Oldest First</option>
+            <option value="title_asc" <%= typeof query !== 'undefined' && query.sort === 'title_asc' ? 'selected' : '' %>>Title (A-Z)</option>
+          </select>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="col-md-2 d-flex align-items-end gap-2">
+          <button type="submit" class="btn btn-primary-custom flex-grow-1">
+            <i class="bi bi-funnel me-1"></i> Filter
+          </button>
+          <a href="/items" class="btn btn-light border" title="Reset Filters">
+            <i class="bi bi-arrow-counterclockwise"></i>
+          </a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Results Header -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="small text-muted">
+    Showing <strong><%= items.length %></strong> of <strong><%= pagination.totalItems %></strong> reports
+    <% if (query.q) { %>
+      for "<em><%= query.q %></em>"
+    <% } %>
+  </div>
+  <% if (query.q || query.type || query.category || query.location || query.status) { %>
+    <a href="/items" class="badge bg-light text-secondary border text-decoration-none">
+      <i class="bi bi-x-circle me-1"></i> Clear all active filters
+    </a>
+  <% } %>
+</div>
+
+<!-- Item Grid -->
+<% if (items && items.length > 0) { %>
+  <div class="row g-4 mb-4">
+    <% items.forEach(item => { %>
+      <div class="col-lg-4 col-md-6">
+        <div class="card-item">
+          <div class="card-item-img-wrapper">
+            <span class="card-badge-top-left <%= item.type === 'lost' ? 'badge-lost' : 'badge-found' %>">
+              <%= item.type %>
+            </span>
+            <span class="card-badge-top-right badge badge-status-<%= item.status %>">
+              <%= item.status %>
+            </span>
+            <img src="<%= item.imageUrl %>" alt="<%= item.title %>" class="card-item-img" onerror="this.src='/images/default-item.svg'">
+          </div>
+
+          <div class="p-3 d-flex flex-column flex-grow-1">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="badge bg-light text-secondary border"><%= item.category %></span>
+              <% if (item.claimCount > 0) { %>
+                <small class="text-warning fw-semibold">
+                  <i class="bi bi-shield-exclamation me-1"></i><%= item.claimCount %> claim<%= item.claimCount > 1 ? 's' : '' %>
+                </small>
+              <% } %>
+            </div>
+
+            <h5 class="fw-bold mb-1 text-truncate" title="<%= item.title %>">
+              <a href="/items/<%= item._id %>" class="text-dark text-decoration-none">
+                <%= item.title %>
+              </a>
+            </h5>
+
+            <p class="text-muted small mb-3 flex-grow-1" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+              <%= item.description %>
+            </p>
+
+            <div class="border-top pt-2 small text-secondary">
+              <div class="d-flex align-items-center text-truncate mb-1">
+                <i class="bi bi-geo-alt me-1 text-danger"></i>
+                <span class="text-truncate"><%= item.location %></span>
+              </div>
+              <div class="d-flex align-items-center justify-content-between">
+                <span>
+                  <i class="bi bi-calendar3 me-1 text-muted"></i>
+                  <%= new Date(item.itemDate).toLocaleDateString() %>
+                </span>
+                <span class="text-muted">
+                  By: <%= item.reportedBy ? item.reportedBy.name.split(' ')[0] : 'Community' %>
+                </span>
+              </div>
+            </div>
+
+            <a href="/items/<%= item._id %>" class="btn btn-outline-custom btn-sm mt-3 w-100">
+              <i class="bi bi-box-arrow-up-right me-1"></i> View Details
+            </a>
+          </div>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+
+  <!-- Pagination Controls -->
+  <%- include('../partials/pagination') %>
+<% } else { %>
+  <!-- Empty State -->
+  <div class="empty-state my-5 py-5">
+    <div class="empty-state-icon text-muted">
+      <i class="bi bi-search"></i>
+    </div>
+    <h4 class="fw-bold text-navy mb-2">No matching items found</h4>
+    <p class="text-muted small mb-4" style="max-width: 480px; margin: 0 auto;">
+      We couldn't find any reports matching your search and filter criteria. Try adjusting your search keywords, clearing filters, or submit a new report.
+    </p>
+    <div class="d-flex justify-content-center gap-2">
+      <a href="/items" class="btn btn-outline-custom">Clear All Filters</a>
+      <a href="/items/report-lost" class="btn btn-danger">Report Lost Item</a>
+      <a href="/items/report-found" class="btn btn-accent-custom">Report Found Item</a>
+    </div>
+  </div>
+<% } %>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,89 @@
+<%- include('../partials/header') %>
+
+<div class="row justify-content-center py-4">
+  <div class="col-lg-5 col-md-7 col-sm-9">
+    <div class="form-card">
+      <div class="text-center mb-4">
+        <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-2" style="width: 54px; height: 54px;">
+          <i class="bi bi-box-arrow-in-right fs-3"></i>
+        </div>
+        <h3 class="fw-bold text-navy">Welcome Back</h3>
+        <p class="text-muted small">Log in to manage your reports, verify claims, and check alerts.</p>
+      </div>
+
+      <% if (typeof errors !== 'undefined' && errors.length > 0) { %>
+        <div class="alert alert-danger shadow-sm">
+          <ul class="mb-0 ps-3">
+            <% errors.forEach(err => { %>
+              <li><%= err.msg %></li>
+            <% }) %>
+          </ul>
+        </div>
+      <% } %>
+
+      <form action="/auth/login" method="POST" class="needs-validation" novalidate>
+        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+
+        <!-- Email -->
+        <div class="mb-3">
+          <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text bg-light"><i class="bi bi-envelope"></i></span>
+            <input
+              type="email"
+              class="form-control"
+              id="email"
+              name="email"
+              placeholder="name@university.edu"
+              value="<%= typeof formData !== 'undefined' && formData.email ? formData.email : '' %>"
+              required
+            >
+          </div>
+          <div class="invalid-feedback">Please enter your email address.</div>
+        </div>
+
+        <!-- Password -->
+        <div class="mb-4">
+          <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text bg-light"><i class="bi bi-lock"></i></span>
+            <input
+              type="password"
+              class="form-control"
+              id="password"
+              name="password"
+              placeholder="Enter your password"
+              required
+            >
+          </div>
+          <div class="invalid-feedback">Please enter your password.</div>
+        </div>
+
+        <button type="submit" class="btn btn-primary-custom w-100 py-2 fs-6 mb-3">
+          <i class="bi bi-box-arrow-in-right me-2"></i> Log In
+        </button>
+      </form>
+
+      <!-- Testing Demonstration Credentials Box -->
+      <div class="bg-light p-3 rounded-3 border small mb-3">
+        <div class="fw-bold text-dark mb-1"><i class="bi bi-info-circle me-1 text-primary"></i> Quick Demo Logins:</div>
+        <div class="d-flex justify-content-between text-muted mb-1">
+          <span>Admin: <code>admin@example.com</code></span>
+          <span><code>Admin@123456</code></span>
+        </div>
+        <div class="d-flex justify-content-between text-muted">
+          <span>User: <code>sarah@example.com</code></span>
+          <span><code>User@123456</code></span>
+        </div>
+      </div>
+
+      <div class="text-center border-top pt-3">
+        <p class="text-muted small mb-0">
+          Don't have an account yet? <a href="/auth/register" class="fw-semibold text-teal">Register now</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

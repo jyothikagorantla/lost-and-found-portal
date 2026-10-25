@@ -1,0 +1,150 @@
+<%- include('../partials/header') %>
+
+<div class="row justify-content-center py-4">
+  <div class="col-lg-8 col-md-10">
+    <div class="form-card">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h3 class="fw-bold text-navy mb-1">Edit Report: <%= item.title %></h3>
+          <p class="text-muted small mb-0">Update information or modify details for this report.</p>
+        </div>
+        <span class="badge <%= item.type === 'lost' ? 'badge-lost' : 'badge-found' %>">
+          <%= item.type.toUpperCase() %>
+        </span>
+      </div>
+
+      <% if (typeof errors !== 'undefined' && errors.length > 0) { %>
+        <div class="alert alert-danger shadow-sm">
+          <ul class="mb-0 ps-3">
+            <% errors.forEach(err => { %>
+              <li><%= err.msg %></li>
+            <% }) %>
+          </ul>
+        </div>
+      <% } %>
+
+      <form action="/items/<%= item._id %>/update" method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+        <input type="hidden" name="type" value="<%= item.type %>">
+
+        <div class="row g-3 mb-3">
+          <!-- Item Title -->
+          <div class="col-md-7">
+            <label for="title" class="form-label">Item Title <span class="text-danger">*</span></label>
+            <input
+              type="text"
+              class="form-control"
+              id="title"
+              name="title"
+              value="<%= typeof formData !== 'undefined' && formData.title ? formData.title : item.title %>"
+              required
+              minlength="2"
+              maxlength="120"
+            >
+          </div>
+
+          <!-- Category -->
+          <div class="col-md-5">
+            <label for="category" class="form-label">Category <span class="text-danger">*</span></label>
+            <select class="form-select" id="category" name="category" required>
+              <% categories.forEach(cat => { %>
+                <option value="<%= cat %>" <%= (formData && formData.category === cat) || item.category === cat ? 'selected' : '' %>>
+                  <%= cat %>
+                </option>
+              <% }) %>
+            </select>
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <!-- Location -->
+          <div class="col-md-7">
+            <label for="location" class="form-label">Location <span class="text-danger">*</span></label>
+            <input
+              type="text"
+              class="form-control"
+              id="location"
+              name="location"
+              value="<%= typeof formData !== 'undefined' && formData.location ? formData.location : item.location %>"
+              required
+            >
+          </div>
+
+          <!-- Date -->
+          <div class="col-md-5">
+            <label for="itemDate" class="form-label">Date <span class="text-danger">*</span></label>
+            <input
+              type="date"
+              class="form-control"
+              id="itemDate"
+              name="itemDate"
+              value="<%= typeof formData !== 'undefined' && formData.itemDate ? formData.itemDate : new Date(item.itemDate).toISOString().split('T')[0] %>"
+              required
+            >
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="mb-3">
+          <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
+          <textarea
+            class="form-control"
+            id="description"
+            name="description"
+            rows="4"
+            required
+            minlength="5"
+          ><%= typeof formData !== 'undefined' && formData.description ? formData.description : item.description %></textarea>
+        </div>
+
+        <!-- Current & New Photo -->
+        <div class="mb-3">
+          <label class="form-label">Current Photo</label>
+          <div class="d-flex align-items-center mb-2">
+            <img src="<%= item.imageUrl %>" alt="Current" class="img-thumbnail rounded me-3" style="width: 80px; height: 80px; object-fit: cover;" onerror="this.src='/images/default-item.svg'">
+            <small class="text-muted">Upload a new file below only if you want to replace this image.</small>
+          </div>
+          <input
+            type="file"
+            class="form-control"
+            id="image"
+            name="image"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+          >
+        </div>
+
+        <!-- Status Selection -->
+        <div class="mb-3">
+          <label for="status" class="form-label">Item Status</label>
+          <select name="status" id="status" class="form-select">
+            <option value="active" <%= item.status === 'active' ? 'selected' : '' %>>Active (Searching / Available)</option>
+            <option value="claimed" <%= item.status === 'claimed' ? 'selected' : '' %>>Claimed (In Process)</option>
+            <option value="resolved" <%= item.status === 'resolved' ? 'selected' : '' %>>Resolved (Recovered / Returned)</option>
+          </select>
+        </div>
+
+        <!-- Confidential Notes -->
+        <div class="mb-4 p-3 bg-light rounded-3 border">
+          <label for="additionalPrivateNotes" class="form-label fw-bold mb-1">
+            <i class="bi bi-shield-lock text-primary me-1"></i> Private Notes (Confidential)
+          </label>
+          <textarea
+            class="form-control"
+            id="additionalPrivateNotes"
+            name="additionalPrivateNotes"
+            rows="2"
+          ><%= typeof formData !== 'undefined' && formData.additionalPrivateNotes ? formData.additionalPrivateNotes : (item.additionalPrivateNotes || '') %></textarea>
+        </div>
+
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary-custom flex-grow-1 py-2">
+            <i class="bi bi-save me-1"></i> Save Changes
+          </button>
+          <a href="/items/<%= item._id %>" class="btn btn-outline-secondary px-4 py-2">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

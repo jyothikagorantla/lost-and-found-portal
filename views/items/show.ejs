@@ -1,0 +1,277 @@
+<%- include('../partials/header') %>
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Home</a></li>
+    <li class="breadcrumb-item"><a href="/items" class="text-decoration-none">Items</a></li>
+    <li class="breadcrumb-item active" aria-current="page"><%= item.title %></li>
+  </ol>
+</nav>
+
+<div class="row g-4">
+  <!-- Left Column: Item Image & Key Meta -->
+  <div class="col-lg-5">
+    <div class="detail-card mb-4 text-center">
+      <div class="detail-img-container mb-3 position-relative">
+        <span class="card-badge-top-left <%= item.type === 'lost' ? 'badge-lost' : 'badge-found' %>">
+          <%= item.type.toUpperCase() %>
+        </span>
+        <span class="card-badge-top-right badge badge-status-<%= item.status %> fs-6 px-3 py-2">
+          <%= item.status.toUpperCase() %>
+        </span>
+        <img 
+          src="<%= item.imageUrl %>" 
+          alt="<%= item.title %>" 
+          class="detail-img" 
+          onerror="this.src='/images/default-item.svg'"
+        >
+      </div>
+
+      <div class="d-flex justify-content-center gap-2 mb-3">
+        <span class="badge bg-light text-dark border px-3 py-2">
+          <i class="bi bi-tag me-1 text-primary"></i> <%= item.category %>
+        </span>
+        <span class="badge bg-light text-dark border px-3 py-2">
+          <i class="bi bi-clock-history me-1 text-muted"></i> Reported <%= new Date(item.createdAt).toLocaleDateString() %>
+        </span>
+      </div>
+
+      <!-- Claim CTA / Status for Normal User -->
+      <% if (!isOwner && item.status !== 'resolved') { %>
+        <% if (existingUserClaim) { %>
+          <div class="alert alert-info border-0 shadow-sm text-start mb-0">
+            <div class="d-flex align-items-center mb-1">
+              <i class="bi bi-shield-check fs-5 me-2 text-info"></i>
+              <strong class="text-navy">Your Claim Status: <%= existingUserClaim.status.toUpperCase() %></strong>
+            </div>
+            <p class="small text-muted mb-2">
+              You submitted an ownership claim on <%= new Date(existingUserClaim.createdAt).toLocaleDateString() %>.
+            </p>
+            <a href="/claims/<%= existingUserClaim._id %>" class="btn btn-sm btn-outline-primary">
+              View Claim Progress
+            </a>
+          </div>
+        <% } else if (item.type === 'found' || item.type === 'lost') { %>
+          <div class="p-3 bg-light rounded-3 border text-start">
+            <h6 class="fw-bold text-navy mb-1">
+              <%= item.type === 'found' ? 'Is this your item?' : 'Did you find this item?' %>
+            </h6>
+            <p class="small text-muted mb-3">
+              <%= item.type === 'found' 
+                  ? 'If this belongs to you, submit an ownership claim with identifying proof to recover it.'
+                  : 'If you have found this missing item, contact the portal administrator or submit a report.' %>
+            </p>
+            <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+              <a href="/claims/item/<%= item._id %>/create" class="btn btn-accent-custom w-100 py-2">
+                <i class="bi bi-shield-check me-2"></i> Submit Ownership Claim
+              </a>
+            <% } else { %>
+              <a href="/auth/login" class="btn btn-primary-custom w-100 py-2">
+                Log In to Claim This Item
+              </a>
+            <% } %>
+          </div>
+        <% } %>
+      <% } else if (item.status === 'resolved') { %>
+        <div class="alert alert-success border-0 shadow-sm d-flex align-items-center mb-0">
+          <i class="bi bi-check-circle-fill fs-3 me-3 text-success"></i>
+          <div>
+            <strong class="d-block text-success">Case Resolved</strong>
+            <small class="text-muted">This item has been safely reunited with its owner.</small>
+          </div>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Management Controls for Reporter or Admin -->
+    <% if (isOwner || isAdmin) { %>
+      <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-header bg-white py-3 border-bottom">
+          <h6 class="fw-bold mb-0 text-navy">
+            <i class="bi bi-sliders me-2 text-primary"></i> Report Management
+          </h6>
+        </div>
+        <div class="card-body p-3 d-flex flex-column gap-2">
+          <a href="/items/<%= item._id %>/edit" class="btn btn-outline-custom w-100">
+            <i class="bi bi-pencil-square me-2"></i> Edit Report Details
+          </a>
+
+          <% if (item.status !== 'resolved') { %>
+            <form action="/items/<%= item._id %>/resolve" method="POST" class="m-0">
+              <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+              <button type="submit" class="btn btn-success w-100" data-confirm="Are you sure you want to mark this item as resolved/recovered?">
+                <i class="bi bi-check2-circle me-2"></i> Mark as Recovered &amp; Resolved
+              </button>
+            </form>
+          <% } %>
+
+          <form action="/items/<%= item._id %>/delete" method="POST" class="m-0">
+            <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+            <button type="submit" class="btn btn-outline-danger w-100" data-confirm="Are you sure you want to permanently delete this report? This action cannot be undone.">
+              <i class="bi bi-trash3 me-2"></i> Delete Report
+            </button>
+          </form>
+        </div>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Right Column: Details, Private Notes, Claims, Matches -->
+  <div class="col-lg-7">
+    <div class="detail-card mb-4">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <h2 class="fw-bold text-navy mb-0"><%= item.title %></h2>
+      </div>
+
+      <!-- Meta Info Grid -->
+      <div class="row g-3 py-3 border-top border-bottom my-3 bg-light rounded-3 px-2">
+        <div class="col-sm-6">
+          <small class="text-muted d-block">Location:</small>
+          <div class="fw-semibold text-dark">
+            <i class="bi bi-geo-alt text-danger me-1"></i> <%= item.location %>
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <small class="text-muted d-block"><%= item.type === 'lost' ? 'Date Lost' : 'Date Found' %>:</small>
+          <div class="fw-semibold text-dark">
+            <i class="bi bi-calendar-event text-primary me-1"></i> <%= new Date(item.itemDate).toLocaleDateString() %>
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <small class="text-muted d-block">Reported By:</small>
+          <div class="fw-semibold text-dark">
+            <i class="bi bi-person text-secondary me-1"></i>
+            <%= item.reportedBy ? item.reportedBy.name : 'Community Member' %>
+            <% if (item.reportedBy && item.reportedBy.role === 'admin') { %>
+              <span class="badge bg-danger ms-1" style="font-size: 0.65rem;">ADMIN</span>
+            <% } %>
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <small class="text-muted d-block">Report ID:</small>
+          <div class="small text-secondary font-monospace">
+            #<%= item._id.toString().substring(18) %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="mb-4">
+        <h5 class="fw-bold text-navy mb-2">Detailed Description</h5>
+        <p class="text-secondary" style="white-space: pre-line; line-height: 1.7;">
+          <%= item.description %>
+        </p>
+      </div>
+
+      <!-- Confidential Notes: Visible ONLY to Owner or Admin -->
+      <% if (canViewPrivateNotes) { %>
+        <div class="p-3 bg-warning bg-opacity-10 rounded-3 border border-warning mb-4">
+          <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-shield-lock-fill text-warning fs-5 me-2"></i>
+            <h6 class="fw-bold mb-0 text-dark">Private Identifying Notes (Visible only to you &amp; Admins)</h6>
+          </div>
+          <p class="small text-muted mb-0">
+            <%= item.additionalPrivateNotes ? item.additionalPrivateNotes : 'No private notes entered for this report.' %>
+          </p>
+        </div>
+      <% } %>
+
+      <!-- Received Claims Section (Only visible to Reporter or Admin) -->
+      <% if ((isOwner || isAdmin) && receivedClaims && receivedClaims.length > 0) { %>
+        <div class="border-top pt-4 mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold text-navy mb-0">
+              <i class="bi bi-inbox me-2 text-primary"></i> Received Claims (<%= receivedClaims.length %>)
+            </h5>
+            <small class="text-muted">Review proof submitted by claimants</small>
+          </div>
+
+          <div class="list-group">
+            <% receivedClaims.forEach(claim => { %>
+              <div class="list-group-item p-3 rounded-3 mb-2 border shadow-sm">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <div>
+                    <h6 class="fw-bold mb-1"><%= claim.claimant ? claim.claimant.name : 'Unknown Claimant' %></h6>
+                    <small class="text-muted">Submitted <%= new Date(claim.createdAt).toLocaleDateString() %></small>
+                  </div>
+                  <span class="badge <%= claim.status === 'approved' ? 'bg-success' : (claim.status === 'rejected' ? 'bg-danger' : 'bg-warning text-dark') %>">
+                    <%= claim.status.toUpperCase() %>
+                  </span>
+                </div>
+
+                <p class="small text-dark mb-2">
+                  <strong>Proof / Explanation:</strong> <%= claim.explanation %>
+                </p>
+
+                <% if (claim.evidenceImage) { %>
+                  <div class="mb-2">
+                    <small class="text-muted d-block mb-1">Attached Evidence:</small>
+                    <a href="<%= claim.evidenceImage %>" target="_blank">
+                      <img src="<%= claim.evidenceImage %>" alt="Claim Evidence" class="rounded img-thumbnail" style="height: 60px;">
+                    </a>
+                  </div>
+                <% } %>
+
+                <div class="d-flex gap-2 mt-3 pt-2 border-top">
+                  <a href="/claims/<%= claim._id %>" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-box-arrow-up-right me-1"></i> Full Claim Details &amp; Decision
+                  </a>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        </div>
+      <% } %>
+
+      <!-- Potential Matches Section -->
+      <% if (potentialMatches && potentialMatches.length > 0) { %>
+        <div class="border-top pt-4">
+          <div class="d-flex align-items-center mb-3">
+            <i class="bi bi-lightning-charge-fill text-warning fs-5 me-2"></i>
+            <div>
+              <h5 class="fw-bold text-navy mb-0">Smart Matching Suggestions</h5>
+              <small class="text-muted">Potential matching reports identified by the portal</small>
+            </div>
+          </div>
+
+          <div class="row g-3">
+            <% potentialMatches.forEach(match => { %>
+              <div class="col-md-6">
+                <div class="match-card h-100 d-flex flex-column justify-content-between">
+                  <div>
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                      <span class="badge <%= match.item.type === 'lost' ? 'badge-lost' : 'badge-found' %>">
+                        <%= match.item.type.toUpperCase() %>
+                      </span>
+                      <span class="match-score-badge"><%= match.score %>% Match</span>
+                    </div>
+
+                    <h6 class="fw-bold text-navy mb-1 text-truncate" title="<%= match.item.title %>">
+                      <%= match.item.title %>
+                    </h6>
+                    <small class="text-muted d-block mb-2">
+                      <i class="bi bi-geo-alt me-1"></i><%= match.item.location %>
+                    </small>
+
+                    <ul class="small text-muted ps-3 mb-3">
+                      <% match.reasons.forEach(r => { %>
+                        <li><%= r %></li>
+                      <% }) %>
+                    </ul>
+                  </div>
+
+                  <a href="/items/<%= match.item._id %>" class="btn btn-sm btn-outline-success w-100">
+                    View Matching Report
+                  </a>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,83 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold text-navy mb-1">My Ownership Claims</h2>
+    <p class="text-muted small mb-0">Track all claims you have submitted to recover items.</p>
+  </div>
+  <a href="/items" class="btn btn-outline-custom btn-sm">
+    <i class="bi bi-search me-1"></i> Browse Items
+  </a>
+</div>
+
+<% if (claims && claims.length > 0) { %>
+  <div class="row g-4">
+    <% claims.forEach(claim => { %>
+      <div class="col-md-6 col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 h-100 d-flex flex-column justify-content-between">
+          <div class="p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <span class="badge <%= claim.status === 'approved' ? 'bg-success' : (claim.status === 'rejected' ? 'bg-danger' : 'bg-warning text-dark') %> fs-6 px-3 py-2">
+                <%= claim.status.toUpperCase() %>
+              </span>
+              <small class="text-muted"><%= new Date(claim.createdAt).toLocaleDateString() %></small>
+            </div>
+
+            <% if (claim.item) { %>
+              <div class="d-flex align-items-center mb-3">
+                <img 
+                  src="<%= claim.item.imageUrl %>" 
+                  alt="<%= claim.item.title %>" 
+                  class="rounded me-3 border" 
+                  style="width: 50px; height: 50px; object-fit: cover;"
+                  onerror="this.src='/images/default-item.svg'"
+                >
+                <div class="overflow-hidden">
+                  <h6 class="fw-bold text-navy mb-0 text-truncate" title="<%= claim.item.title %>">
+                    <%= claim.item.title %>
+                  </h6>
+                  <small class="text-muted"><%= claim.item.category %></small>
+                </div>
+              </div>
+            <% } else { %>
+              <div class="text-muted small mb-3">
+                <i class="bi bi-exclamation-circle me-1"></i> Referenced item was removed.
+              </div>
+            <% } %>
+
+            <div class="bg-light p-3 rounded-3 small mb-3">
+              <strong class="d-block text-secondary mb-1">Your Explanation:</strong>
+              <p class="text-dark mb-0" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                <%= claim.explanation %>
+              </p>
+            </div>
+
+            <% if (claim.reviewNotes) { %>
+              <div class="p-2 border rounded-3 bg-white small mb-3">
+                <strong class="text-secondary d-block">Review Feedback:</strong>
+                <span class="text-muted">"<%= claim.reviewNotes %>"</span>
+              </div>
+            <% } %>
+          </div>
+
+          <div class="p-3 border-top bg-light rounded-bottom-4">
+            <a href="/claims/<%= claim._id %>" class="btn btn-outline-custom btn-sm w-100">
+              <i class="bi bi-box-arrow-up-right me-1"></i> View Full Claim
+            </a>
+          </div>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+<% } else { %>
+  <div class="empty-state py-5">
+    <div class="empty-state-icon text-muted">
+      <i class="bi bi-shield-x"></i>
+    </div>
+    <h4 class="fw-bold text-navy mb-2">No claims filed yet</h4>
+    <p class="text-muted small mb-4">When you spot an item that belongs to you, submit a claim from the item details page.</p>
+    <a href="/items" class="btn btn-primary-custom">Browse Reported Items</a>
+  </div>
+<% } %>
+
+<%- include('../partials/footer') %>

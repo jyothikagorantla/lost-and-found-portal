@@ -1,0 +1,147 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+  <div>
+    <h2 class="fw-bold text-navy mb-1">Item Moderation &amp; Management</h2>
+    <p class="text-muted small mb-0">Review all community reports, update statuses, or remove fraudulent listings.</p>
+  </div>
+  <a href="/admin" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i> Admin Dashboard
+  </a>
+</div>
+
+<!-- Search & Filter Card -->
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+  <div class="card-body p-3">
+    <form action="/admin/items" method="GET" class="row g-2 align-items-center">
+      <div class="col-md-4">
+        <input 
+          type="text" 
+          name="q" 
+          class="form-control" 
+          placeholder="Search items by title or location..." 
+          value="<%= typeof query !== 'undefined' && query.q ? query.q : '' %>"
+        >
+      </div>
+      <div class="col-md-2">
+        <select name="type" class="form-select">
+          <option value="">All Types</option>
+          <option value="lost" <%= typeof query !== 'undefined' && query.type === 'lost' ? 'selected' : '' %>>Lost</option>
+          <option value="found" <%= typeof query !== 'undefined' && query.type === 'found' ? 'selected' : '' %>>Found</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select name="status" class="form-select">
+          <option value="">All Statuses</option>
+          <option value="active" <%= typeof query !== 'undefined' && query.status === 'active' ? 'selected' : '' %>>Active</option>
+          <option value="claimed" <%= typeof query !== 'undefined' && query.status === 'claimed' ? 'selected' : '' %>>Claimed</option>
+          <option value="resolved" <%= typeof query !== 'undefined' && query.status === 'resolved' ? 'selected' : '' %>>Resolved</option>
+          <option value="rejected" <%= typeof query !== 'undefined' && query.status === 'rejected' ? 'selected' : '' %>>Rejected</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select name="category" class="form-select">
+          <option value="">All Categories</option>
+          <% categories.forEach(cat => { %>
+            <option value="<%= cat %>" <%= typeof query !== 'undefined' && query.category === cat ? 'selected' : '' %>><%= cat %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-2 d-flex gap-2">
+        <button type="submit" class="btn btn-primary-custom flex-grow-1">Filter</button>
+        <a href="/admin/items" class="btn btn-light border"><i class="bi bi-x"></i></a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light small">
+        <tr>
+          <th class="ps-3 py-3">Item</th>
+          <th>Type</th>
+          <th>Category</th>
+          <th>Reported By</th>
+          <th>Status</th>
+          <th>Change Status</th>
+          <th class="text-end pe-3">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (items && items.length > 0) { %>
+          <% items.forEach(item => { %>
+            <tr>
+              <td class="ps-3 py-3">
+                <div class="d-flex align-items-center">
+                  <img src="<%= item.imageUrl %>" alt="<%= item.title %>" class="rounded me-2 border" style="width: 40px; height: 40px; object-fit: cover;" onerror="this.src='/images/default-item.svg'">
+                  <div>
+                    <a href="/items/<%= item._id %>" class="fw-bold text-navy text-decoration-none">
+                      <%= item.title %>
+                    </a>
+                    <small class="text-muted d-block text-truncate" style="max-width: 180px;">
+                      <i class="bi bi-geo-alt me-1"></i><%= item.location %>
+                    </small>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="badge <%= item.type === 'lost' ? 'badge-lost' : 'badge-found' %>">
+                  <%= item.type.toUpperCase() %>
+                </span>
+              </td>
+              <td class="small text-secondary"><%= item.category %></td>
+              <td class="small text-secondary">
+                <%= item.reportedBy ? item.reportedBy.name : 'Unknown' %>
+              </td>
+              <td>
+                <span class="badge badge-status-<%= item.status %>">
+                  <%= item.status %>
+                </span>
+              </td>
+              <td>
+                <form action="/admin/items/<%= item._id %>/status" method="POST" class="d-flex align-items-center gap-1 m-0">
+                  <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                  <select name="status" class="form-select form-select-sm" style="width: 110px;">
+                    <option value="active" <%= item.status === 'active' ? 'selected' : '' %>>Active</option>
+                    <option value="claimed" <%= item.status === 'claimed' ? 'selected' : '' %>>Claimed</option>
+                    <option value="resolved" <%= item.status === 'resolved' ? 'selected' : '' %>>Resolved</option>
+                    <option value="rejected" <%= item.status === 'rejected' ? 'selected' : '' %>>Rejected</option>
+                  </select>
+                  <button type="submit" class="btn btn-sm btn-light border" title="Update status">
+                    <i class="bi bi-check"></i>
+                  </button>
+                </form>
+              </td>
+              <td class="text-end pe-3">
+                <div class="btn-group btn-group-sm">
+                  <a href="/items/<%= item._id %>" class="btn btn-light border" title="View details">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  <a href="/items/<%= item._id %>/edit" class="btn btn-light border text-primary" title="Edit">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                  <form action="/admin/items/<%= item._id %>/delete" method="POST" class="d-inline">
+                    <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                    <button type="submit" class="btn btn-light border text-danger" title="Remove report" data-confirm="Are you sure you want to PERMANENTLY REMOVE this report?">
+                      <i class="bi bi-trash3"></i>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        <% } else { %>
+          <tr>
+            <td colspan="7" class="text-center py-4 text-muted">
+              No items match your filters.
+            </td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

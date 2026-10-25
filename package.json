@@ -1,0 +1,47 @@
+{
+  "name": "lost-and-found-portal",
+  "version": "1.0.0",
+  "description": "A full-stack responsive web application to report, browse, claim, and recover lost and found belongings.",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node --watch app.js",
+    "seed": "node scripts/seedData.js",
+    "create-admin": "node scripts/createAdmin.js",
+    "test": "node --test tests/*.test.js",
+    "smoke": "node scripts/smokeTest.js"
+  },
+  "keywords": [
+    "lost-and-found",
+    "nodejs",
+    "express",
+    "mongodb",
+    "mongoose",
+    "ejs",
+    "bootstrap5"
+  ],
+  "author": "Lost & Found Portal Team",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "connect-flash": "^0.1.1",
+    "connect-mongo": "^5.1.0",
+    "dotenv": "^16.4.7",
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "express-session": "^1.18.1",
+    "express-validator": "^7.2.1",
+    "helmet": "^8.0.0",
+    "method-override": "^3.0.0",
+    "mongoose": "^8.10.1",
+    "multer": "^1.4.5-lts.1"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "^10.1.4",
+    "supertest": "^7.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
