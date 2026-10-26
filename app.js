@@ -1,4 +1,12 @@
+
+const dns = require('node:dns');
+
+// DNS workaround for MongoDB Atlas SRV lookup failures.
+// If your network blocks these resolvers, fix DNS at the network level.
+dns.setServers(['8.8.8.8', '8.8.4.4']);
+
 require('dotenv').config();
+
 const express = require('express');
 const path = require('path');
 const session = require('express-session');
@@ -6,25 +14,40 @@ const MongoStore = require('connect-mongo');
 const flash = require('connect-flash');
 const helmet = require('helmet');
 const methodOverride = require('method-override');
-const mongoose = require('mongoose');
 
-const { connectDB, disconnectDB, getClientPromise, DB_NAME } = require('./config/db');
-const { setCurrentUser } = require('./middleware/auth');
+const { connectDB } = require('./config/db');
+
+const {
+  setCurrentUser,
+  ensureAuthenticated,
+} = require('./middleware/auth');
+
 const csrfProtection = require('./middleware/csrf');
-const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 
-// Route modules
+const {
+  notFoundHandler,
+  errorHandler,
+} = require('./middleware/errorHandler');
+
 const authRoutes = require('./routes/authRoutes');
 const itemRoutes = require('./routes/itemRoutes');
 const claimRoutes = require('./routes/claimRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+
 const itemController = require('./controllers/itemController');
+const authController = require('./controllers/authController');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Security Headers with Helmet
+// Trust Render's HTTPS reverse proxy in production.
+// This must be configured before session middleware.
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
+// Security headers
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -60,166 +83,158 @@ app.use(
   })
 );
 
-// View engine setup
+// EJS views
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
-// Body parsers
+// Request body parsing
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.json({ limit: '10mb' }));
 
-// Method override for RESTful PUT and DELETE from forms
+// HTML form method override
 app.use(methodOverride('_method'));
 
-// Serve static assets
+// Static files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Configure Session Store
-// IMPORTANT: do not pass `mongoUrl` here. That makes connect-mongo open its own,
-// separate connection to the configured URI (127.0.0.1:27017 by default) at
-// require-time, before the in-memory fallback exists. Instead, reuse the active
-// MongoClient that config/db.js hands out once the connection is established.
+// Validate environment configuration
+const mongoUri = process.env.MONGODB_URI;
+const sessionSecret = process.env.SESSION_SECRET;
+
+if (!mongoUri) {
+  throw new Error('MONGODB_URI is missing from environment variables.');
+}
+
+if (
+  process.env.NODE_ENV === 'production' &&
+  !sessionSecret
+) {
+  throw new Error('SESSION_SECRET must be configured in production.');
+}
+
+// Persistent MongoDB session store
 const sessionStore = MongoStore.create({
-  clientPromise: getClientPromise(),
-  dbName: DB_NAME,
+  mongoUrl: mongoUri,
   collectionName: 'sessions',
-  ttl: 14 * 24 * 60 * 60, // 14 days
+  ttl: 14 * 24 * 60 * 60,
   autoRemove: 'native',
 });
 
-// If the database never connects, avoid an unhandled rejection inside the store.
-sessionStore.collectionP.catch((err) => {
-  console.warn('[Session Store Warning]', err.message);
-});
-
 sessionStore.on('error', (err) => {
-  // Gracefully handle session store errors without crashing
-  console.warn('[Session Store Warning]', err.message);
+  console.error('[Session Store Error]', err.message);
 });
 
+// Sessions
 app.use(
   session({
-    // Unique cookie name: browsers share cookies across ALL localhost ports, so the
-    // default name ("connect.sid") gets overwritten by any other Express app you run
-    // on localhost, which breaks the session and causes CSRF "Security check failed".
     name: 'lostfound.sid',
-    secret: process.env.SESSION_SECRET || 'lost_and_found_default_session_secret_2026',
+    secret:
+      sessionSecret ||
+      'development-only-secret-change-before-deployment',
     resave: false,
     saveUninitialized: false,
+    rolling: true,
     store: sessionStore,
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
       sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     },
   })
 );
 
-// Connect Flash messages
+// Flash messages
 app.use(flash());
 
-// CSRF Protection
+// CSRF protection must run after session middleware
 app.use(csrfProtection);
 
-// Populate res.locals with current user and flash messages
+// Make user and flash information available to views
 app.use(setCurrentUser);
 
-// Static / informational pages
+// Informational pages
 app.get('/', itemController.showHome);
 
 app.get('/about', (req, res) => {
-  res.render('about', { title: 'About Us - Lost & Found Portal' });
+  res.render('about', {
+    title: 'About Us - Lost & Found Portal',
+  });
 });
 
 app.get('/contact', (req, res) => {
-  res.render('contact', { title: 'Contact Us - Lost & Found Portal' });
+  res.render('contact', {
+    title: 'Contact Us - Lost & Found Portal',
+  });
 });
 
 app.get('/privacy', (req, res) => {
-  res.render('privacy', { title: 'Privacy Policy - Lost & Found Portal' });
+  res.render('privacy', {
+    title: 'Privacy Policy - Lost & Found Portal',
+  });
 });
 
 app.get('/terms', (req, res) => {
-  res.render('terms', { title: 'Terms of Service - Lost & Found Portal' });
+  res.render('terms', {
+    title: 'Terms of Service - Lost & Found Portal',
+  });
 });
 
-// Mount Routes
+// Authentication
 app.use('/auth', authRoutes);
-app.get('/dashboard', require('./middleware/auth').ensureAuthenticated, require('./controllers/authController').showDashboard);
+
+// Dashboard
+app.get(
+  '/dashboard',
+  ensureAuthenticated,
+  authController.showDashboard
+);
+
+// Lost and found items
 app.use('/items', itemRoutes);
+
+// Claims
 app.use('/claims', claimRoutes);
+
+// Notifications
 app.use('/notifications', notificationRoutes);
+
+// Admin
 app.use('/admin', adminRoutes);
 
-// Error Handling
+// Handle unknown routes
 app.use(notFoundHandler);
+
+// Central error handler
 app.use(errorHandler);
 
-// Report listen errors (e.g. port already in use by an old, still-running copy of
-// this app) clearly, and clean up the in-memory MongoDB instead of failing silently.
-const attachServerErrorHandler = (server) => {
-  server.on('error', (err) => {
-    if (err.code === 'EADDRINUSE') {
-      console.error(`❌ Port ${PORT} is already in use. An older copy of the app is probably still running.`);
-      console.error('   Close the other terminal, or run in PowerShell: taskkill /F /IM node.exe');
-    } else {
-      console.error('❌ Server error:', err.message);
-    }
-    if (require.main === module) {
-      disconnectDB().finally(() => process.exit(1));
-    }
+// Start only after MongoDB connects
+async function startServer() {
+  await connectDB();
+
+  const server = app.listen(PORT, () => {
+    console.log('==============================================');
+    console.log('Lost & Found Portal is running.');
+    console.log(`URL: http://localhost:${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log('MongoDB connection initialized.');
+    console.log('==============================================');
   });
+
   return server;
-};
-
-// Start server function
-const startServer = async () => {
-  try {
-    await connectDB();
-    const server = attachServerErrorHandler(app.listen(PORT, () => {
-      console.log(`======================================================`);
-      console.log(`🚀 Lost & Found Portal is live!`);
-      console.log(`🌐 Local URL: http://localhost:${PORT}`);
-      console.log(`📁 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`======================================================`);
-    }));
-    return server;
-  } catch (err) {
-    console.error('Fatal: Could not initialize database.', err.message);
-    // Still start Express server so helpful error page or landing diagnostics can show
-    const server = attachServerErrorHandler(app.listen(PORT, () => {
-      console.log(`⚠️  Server started on port ${PORT} with database disconnected.`);
-      console.log(`🌐 Local URL: http://localhost:${PORT}`);
-    }));
-    return server;
-  }
-};
-
-if (require.main === module) {
-  startServer();
-
-  // Stop the in-memory MongoDB (if any) so no mongod process is left behind.
-  // On Windows, Ctrl+C is delivered to the child mongod process as well, so the
-  // shutdown must never wait forever: force-exit after 3 seconds.
-  let shuttingDown = false;
-  const shutdown = async (signal) => {
-    if (shuttingDown) return;
-    shuttingDown = true;
-    console.log(`\n${signal} received. Shutting down...`);
-    const forceExit = setTimeout(() => process.exit(0), 3000);
-    try {
-      await disconnectDB();
-    } catch (err) {
-      console.warn('[Shutdown Warning]', err.message);
-    } finally {
-      clearTimeout(forceExit);
-      process.exit(0);
-    }
-  };
-  process.on('SIGINT', () => shutdown('SIGINT'));
-  process.on('SIGTERM', () => shutdown('SIGTERM'));
-  process.on('SIGBREAK', () => shutdown('SIGBREAK'));
 }
 
-module.exports = { app, startServer };
+if (require.main === module) {
+  startServer().catch((err) => {
+    console.error(
+      '[Startup Error] Application could not start:',
+      err.message
+    );
+    process.exit(1);
+  });
+}
+
+module.exports = {
+  app,
+  startServer,
+};

@@ -1,14 +1,23 @@
+```ejs
 <%- include('../partials/header') %>
 
 <div class="row justify-content-center py-4">
   <div class="col-lg-6 col-md-8 col-sm-10">
     <div class="form-card">
+
       <div class="text-center mb-4">
-        <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-2" style="width: 54px; height: 54px;">
+        <div
+          class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-2"
+          style="width: 54px; height: 54px;"
+        >
           <i class="bi bi-person-plus fs-3"></i>
         </div>
+
         <h3 class="fw-bold text-navy">Create an Account</h3>
-        <p class="text-muted small">Join the community to report items, track your claims, and receive notifications.</p>
+
+        <p class="text-muted small">
+          Join the community to report items, track your claims, and receive notifications.
+        </p>
       </div>
 
       <% if (typeof errors !== 'undefined' && errors.length > 0) { %>
@@ -21,14 +30,26 @@
         </div>
       <% } %>
 
-      <form action="/auth/register" method="POST" class="needs-validation" novalidate>
-        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+      <form
+        action="/auth/register"
+        method="POST"
+        class="needs-validation"
+        novalidate
+      >
+        <!-- CSRF Protection -->
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
         <!-- Full Name -->
         <div class="mb-3">
-          <label for="name" class="form-label">Full Name <span class="text-danger">*</span></label>
+          <label for="name" class="form-label">
+            Full Name <span class="text-danger">*</span>
+          </label>
+
           <div class="input-group">
-            <span class="input-group-text bg-light"><i class="bi bi-person"></i></span>
+            <span class="input-group-text bg-light">
+              <i class="bi bi-person"></i>
+            </span>
+
             <input
               type="text"
               class="form-control"
@@ -41,14 +62,23 @@
               maxlength="100"
             >
           </div>
-          <div class="invalid-feedback">Please enter your full name (at least 2 characters).</div>
+
+          <div class="invalid-feedback">
+            Please enter your full name (at least 2 characters).
+          </div>
         </div>
 
         <!-- Email Address -->
         <div class="mb-3">
-          <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+          <label for="email" class="form-label">
+            Email Address <span class="text-danger">*</span>
+          </label>
+
           <div class="input-group">
-            <span class="input-group-text bg-light"><i class="bi bi-envelope"></i></span>
+            <span class="input-group-text bg-light">
+              <i class="bi bi-envelope"></i>
+            </span>
+
             <input
               type="email"
               class="form-control"
@@ -59,15 +89,28 @@
               required
             >
           </div>
-          <div class="invalid-feedback">Please enter a valid email address.</div>
-          <small class="text-muted">We will never share your email publicly.</small>
+
+          <div class="invalid-feedback">
+            Please enter a valid email address.
+          </div>
+
+          <small class="text-muted">
+            We will never share your email publicly.
+          </small>
         </div>
 
         <!-- Phone Number -->
         <div class="mb-3">
-          <label for="phone" class="form-label">Phone Number <span class="text-muted small">(Optional)</span></label>
+          <label for="phone" class="form-label">
+            Phone Number
+            <span class="text-muted small">(Optional)</span>
+          </label>
+
           <div class="input-group">
-            <span class="input-group-text bg-light"><i class="bi bi-telephone"></i></span>
+            <span class="input-group-text bg-light">
+              <i class="bi bi-telephone"></i>
+            </span>
+
             <input
               type="tel"
               class="form-control"
@@ -77,14 +120,23 @@
               value="<%= typeof formData !== 'undefined' && formData.phone ? formData.phone : '' %>"
             >
           </div>
-          <small class="text-muted">Useful for urgent claim coordination.</small>
+
+          <small class="text-muted">
+            Useful for urgent claim coordination.
+          </small>
         </div>
 
         <!-- Password -->
         <div class="mb-3">
-          <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
+          <label for="password" class="form-label">
+            Password <span class="text-danger">*</span>
+          </label>
+
           <div class="input-group">
-            <span class="input-group-text bg-light"><i class="bi bi-lock"></i></span>
+            <span class="input-group-text bg-light">
+              <i class="bi bi-lock"></i>
+            </span>
+
             <input
               type="password"
               class="form-control"
@@ -95,14 +147,23 @@
               minlength="6"
             >
           </div>
-          <div class="invalid-feedback">Password must be at least 6 characters.</div>
+
+          <div class="invalid-feedback">
+            Password must be at least 6 characters.
+          </div>
         </div>
 
         <!-- Confirm Password -->
         <div class="mb-4">
-          <label for="confirmPassword" class="form-label">Confirm Password <span class="text-danger">*</span></label>
+          <label for="confirmPassword" class="form-label">
+            Confirm Password <span class="text-danger">*</span>
+          </label>
+
           <div class="input-group">
-            <span class="input-group-text bg-light"><i class="bi bi-shield-lock"></i></span>
+            <span class="input-group-text bg-light">
+              <i class="bi bi-shield-lock"></i>
+            </span>
+
             <input
               type="password"
               class="form-control"
@@ -113,21 +174,35 @@
               minlength="6"
             >
           </div>
-          <div class="invalid-feedback">Passwords must match.</div>
+
+          <div class="invalid-feedback">
+            Please confirm your password.
+          </div>
         </div>
 
-        <button type="submit" class="btn btn-accent-custom w-100 py-2 fs-6 mb-3">
-          <i class="bi bi-person-check me-2"></i> Complete Registration
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          class="btn btn-accent-custom w-100 py-2 fs-6 mb-3"
+        >
+          <i class="bi bi-person-check me-2"></i>
+          Complete Registration
         </button>
       </form>
 
+      <!-- Login Link -->
       <div class="text-center border-top pt-3">
         <p class="text-muted small mb-0">
-          Already have an account? <a href="/auth/login" class="fw-semibold text-primary">Log in here</a>
+          Already have an account?
+          <a href="/auth/login" class="fw-semibold text-primary">
+            Log in here
+          </a>
         </p>
       </div>
+
     </div>
   </div>
 </div>
 
 <%- include('../partials/footer') %>
+```

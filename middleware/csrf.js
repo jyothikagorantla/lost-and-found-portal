@@ -1,37 +1,62 @@
+
 const crypto = require('crypto');
 
-/**
- * Session-based CSRF protection middleware
- */
 const csrfProtection = (req, res, next) => {
-  // Ensure a CSRF token exists on the session
+  if (!req.session) {
+    return next(
+      new Error('Session middleware must run before CSRF middleware.')
+    );
+  }
+
   if (!req.session.csrfToken) {
     req.session.csrfToken = crypto.randomBytes(32).toString('hex');
   }
 
-  // Make the token available to all templates
   res.locals.csrfToken = req.session.csrfToken;
 
-  // Safe HTTP methods do not mutate state
   const safeMethods = ['GET', 'HEAD', 'OPTIONS'];
+
   if (safeMethods.includes(req.method)) {
     return next();
   }
 
-  // For state-changing methods, verify token
   const clientToken =
     (req.body && req.body._csrf) ||
     (req.query && req.query._csrf) ||
     req.headers['x-csrf-token'] ||
     req.headers['csrf-token'];
 
-  if (!clientToken || clientToken !== req.session.csrfToken) {
-    console.warn(`[CSRF] Invalid or missing CSRF token on ${req.method} ${req.originalUrl}`);
-    req.flash('error', 'Security check failed (CSRF token expired or invalid). Please try again.');
+  const sessionToken = req.session.csrfToken;
+
+  const isValid =
+    typeof clientToken === 'string' &&
+    typeof sessionToken === 'string' &&
+    clientToken.length === sessionToken.length &&
+    clientToken.length > 0 &&
+    crypto.timingSafeEqual(
+      Buffer.from(clientToken, 'utf8'),
+      Buffer.from(sessionToken, 'utf8')
+    );
+
+  if (!isValid) {
+    console.warn(
+      '[CSRF] Token validation failed for ' +
+      req.method +
+      ' ' +
+      req.originalUrl
+    );
+
+    if (typeof req.flash === 'function') {
+      req.flash(
+        'error',
+        'Your security token expired or is invalid. Please refresh the page and try again.'
+      );
+    }
+
     return res.status(403).redirect(req.get('Referrer') || '/');
   }
 
-  next();
+  return next();
 };
 
 module.exports = csrfProtection;
